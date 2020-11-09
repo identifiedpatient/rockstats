@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# You may need to install `bc`: `sudo apt -y install bc` on ubuntu
+
+rockprint() {
+    name=$(grep Name: $1 | tail -n1 | cut -f3 -d " ")
+    race=$(cat $1 | grep Race: | sed -r 's/[ ]{2,}/ /g' | cut -f 5 -d " " | tail -n1)
+    level=$(grep Level $1 | grep -v Min|less | cut -f3 -d" "| sort -n | tail -n1)
+    hp=$(grep "Hit Points" $1 | sed -r 's/.*Hit Points:(.*)Mana:.*/\1/' | tr -d " " | cut -f2 -d/ | sort -n | tail -n1)
+    toprest=$(grep breather $1 | sed -r 's/.*healing\ (.*)\ damage.*/\1/' | grep -v Eater | sort -n | tail -n1)
+    topround=$(grep total $1 | grep You | sed -r 's/.*(\ (.*)\ total.*)/\1/' | tr -d " " | sed -r 's/(.*)total.*/\1/' | sort -n | tail -n1 | tr -d ,)
+    tophit=$(grep total $1 | grep You | sed -r 's/(.*)for.*total./\1/' | tr " " "\n" | grep -E [0-9] | tr -d , | tr -d " " | sort -n | tail -n1)
+    deaths=$(grep 'Type life' $1 | grep -v Hint | wc -l)
+    npchit=$(grep 'you for' $1 | sed -r 's/.+for(.*)damage.*/\1/' | tr " " "\n" | tr -d , | grep -E [0-9] | sort -n | tail -n1)
+    npcround=$(grep 'you for' $1 | sed -r 's/.+for (.+) total.+/\1/' | sort -n | tail -n1 | tr -d ,)
+    resttohp=$(echo "$toprest/$hp" | bc -l | sed -r 's/([0-9]?\.[0-9][0-9]).+/\1/')
+    hittoround=$(echo "$tophit/$topround" | bc -l | sed -r 's/([0-9]?\.[0-9][0-9]).+/\1/')
+    npchittoround=$(echo "$npchit/$npcround" | bc -l | sed -r 's/([0-9]?\.[0-9][0-9]).+/\1/')
+    topxp=$(grep -ri experience $1 | sed -r 's/You gain (.+) experience./\1/' | tr -d , | sort -n | tail -n1)
+    actualxp=$(echo $(( $(grep 'You gain' $1 | grep experience | grep -v first | sed -r 's/You gain (.+) experience./\1/' | tr -d , | tr "\n" "+" | sed -r 's/\+$//') )))
+    effectivexp=$(echo $(( $(grep '\[' $1 | grep '\]' | grep -E 'Mechanical|Social|Medical|Combat|Appearance|Attitude' | grep -vE '^A' | grep -vE 'CATT|KCOM|KMED|K
+SOC|CATT' | tail -n6 | tr -d ']' | tr -d '[' | tr " " "\n" | grep -E '[0-9]' | tr -d '|' | tr "\n" "+" | sed -r 's/\+$//') )))
+    expratio=$(echo "$effectivexp/$actualxp" | bc -l | sed -r 's/([0-9]?\.[0-9][0-9]).*/\1/')
+    totaldam=$(echo $(( $(grep You $1 | grep -i for | grep -i damage | grep -i total | grep -v '>' | grep -v say | sed -r 's/.*damage for (([0-9]|,)+) total*/\1/' | sed -r 's/, missing .*//' | tr -d , | tr -d . | grep -v Vex | grep -E '[0-9]' | sort -n | tr "\n" "+" | sed -r 's/\+$//') )))
+    effectivexptototaldam=$(echo "$effectivexp/$totaldam" | bc -l | sed -r 's/([0-9]?\.[0-9][0-9]).+/\1/')
+    missingsixtimes=$(grep 'missing six times' $1 | grep -E '^You' | wc -l)
+    
+    level=$(numfmt --g $level)
+    hp=$(numfmt --g $hp)
+    toprest=$(numfmt --g $toprest)
+    topround=$(numfmt --g $topround)
+    tophit=$(numfmt --g $tophit)    
+    deaths=$(numfmt --g $deaths)
+    npchit=$(numfmt --g $npchit)
+    npcround=$(numfmt --g $npcround)
+    hittoround=$(numfmt --g $hittoround)
+    npchittoround=$(numfmt --g $npchittoround)
+    topxp=$(numfmt --g $topxp)
+    actualxp=$(numfmt --g $actualxp)
+    effectivexp=$(numfmt --g $effectivexp)
+    totaldam=$(numfmt --g $totaldam)
+    
+    echo -e $name^$race^$level^$totaldam^$actualxp^$effectivexp^$expratio^$effectivexptototaldam^$deaths^$missingsixtimes^$hp^$topxp^$toprest^$resttohp^$tophit^$topround^$hittoround^$npchit^$npcround^$npchittoround >> rstats.out
+}
+
+rstats() {
+
+    echo '' > rstats.out
+
+    echo "Character^Race^Level^Total Damage^XP (earned)^XP* (spent)^XP*/XP^XP*/Damage^Deaths^Missed SIx Times^HP^Top Kill XP^Top Breather^Top Rest/HP^Top Hit^Top Round^Top Hit/Round^Top Hit (NPC)^Top Round (NPC)^Top Hit/Round (NPC)" >> rstats.out
+
+    for char in $(ls *.log | sed 's/\.log//g')
+    do
+	lfile=$(echo -e `ls $char*log`)
+	rockprint $lfile
+    done
+
+    column -t -s ^ rstats.out
+}
+
+rstats
