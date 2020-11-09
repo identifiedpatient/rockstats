@@ -2,7 +2,7 @@
 
 ![](rstats.png)
 
-Computes some statistics on your player log files that are not available in game.
+Computes some statistics on your player log files that are not available in game. In order to use this, you need to keep the entire log file for your character's entire history, or start a new character where you do keep the log file.
 
 To use:
 * Checkout the source code using git
