@@ -46,7 +46,7 @@ rstats() {
 
     echo '' > rstats.out
 
-    echo "Character^Race^Level^Total Damage^XP (earned)^XP* (spent)^XP*/XP^XP*/Damage^Deaths^Missed SIx Times^HP^Top Kill XP^Top Breather^Top Rest/HP^Top Hit^Top Round^Top Hit/Round^Top Hit (NPC)^Top Round (NPC)^Top Hit/Round (NPC)" >> rstats.out
+    echo "Character^Race^Level^Total Damage^XP (earned)^XP* (spent)^XP*/XP^XP*/Damage^Deaths^Missed Six Times^HP^Top Kill XP^Top Breather^Top Rest/HP^Top Hit^Top Round^Top Hit/Round^Top Hit (NPC)^Top Round (NPC)^Top Hit/Round (NPC)" >> rstats.out
 
     for char in $(ls *.log | sed 's/\.log//g')
     do
