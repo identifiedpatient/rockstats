@@ -2,7 +2,7 @@
 
 ![](rstats.png)
 
-Computes some statistics on your player log file that are not available in game.
+Computes some statistics on your player log files that are not available in game.
 
 To use:
 * Checkout the source code using git
